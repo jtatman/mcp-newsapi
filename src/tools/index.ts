@@ -28,6 +28,9 @@ export const registerNewsApiTools = (server: McpServer): void => {
   newsApiToolDefinitions.forEach((toolDef) => {
     try {
       // Pass the raw shape to the inputSchema parameter, assuming SDK handles z.object()
+      console.log(`Registering tool: ${toolDef.name}`);
+      console.log(`Input schema shape for ${toolDef.name}:`, toolDef.inputSchemaShape);
+      
       server.tool(toolDef.name, toolDef.description, toolDef.inputSchemaShape, async (input) => {
         const result = await toolDef.handler(input);
         // Assuming the handler returns the data directly, wrap it in the MCP content format
@@ -36,6 +39,8 @@ export const registerNewsApiTools = (server: McpServer): void => {
         };
       });
       console.log(`Registered News API tool: ${toolDef.name}`);
+      console.log(`Tool description: ${toolDef.description}`);
+      console.log(`Input schema shape:`, toolDef.inputSchemaShape);
     } catch (error) {
       console.error(`Failed to register tool ${toolDef.name}:`, error);
     }

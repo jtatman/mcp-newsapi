@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build 
 
 # expose the port the app runs on
-EXPOSE 3000
+EXPOSE 3005
 
 # command to run the server
 CMD ["node", "build/index.js"]
