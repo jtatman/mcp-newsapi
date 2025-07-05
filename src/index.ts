@@ -1,27 +1,27 @@
+import { Request, Response } from 'express';
+import express from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-// Import the function to register News API tools (will create this next)
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { registerNewsApiTools } from './tools/index.js';
+import { randomUUID } from 'crypto';
 
-const main = async () => {
-  const server = new McpServer({
-    name: 'mcp-newsapi',
-    version: '1.0.0',
-    description: 'MCP Server for accessing News API endpoints.',
-    // Authentication will be handled within the tool handlers using the API key
+const app = express();
+const server = new McpServer({
+  name: 'mcp-newsapi',
+  version: '1.0.0',
+  description: 'MCP Server for accessing News API endpoints.',
+});
+
+registerNewsApiTools(server);
+
+app.all('/mcp', async (req: Request, res: Response) => {
+  const transport = new StreamableHTTPServerTransport({
+  	sessionIdGenerator: () => randomUUID(),
   });
+  await transport.handleRequest(req, res, server);
+});
 
-  // Register News API tools
-  registerNewsApiTools(server);
 
-  console.log('Starting MCP News API Server...');
-  // Use Stdio transport to connect
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.log(`Server "mcp-newsapi" connected via stdio.`);
-};
-
-main().catch((error) => {
-  console.error('Failed to start MCP server:', error);
-  process.exit(1);
+app.listen(3000, () => {
+  console.log('MCP News API Server listening on http://localhost:3000/mcp');
 });
