@@ -4,15 +4,55 @@ import NewsAPI from 'newsapi';
 // Define the input schema shape for the Everything tool
 const everythingInputSchemaShape = {
   q: z.string().min(1).describe('Keywords or phrases to search for in the article title and body.'),
-  sources: z.string().optional().describe('A comma-separated string of identifiers for the news sources or blogs you want headlines from.'),
-  domains: z.string().optional().describe('A comma-separated string of domains (e.g. bbc.co.uk, techcrunch.com) to search within.'),
-  excludeDomains: z.string().optional().describe('A comma-separated string of domains (e.g. bbc.co.uk, techcrunch.com) to exclude from the search.'),
-  from: z.string().optional().describe('A date and optional time for the oldest article allowed. Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS (e.g. 2024-01-01 or 2024-01-01T10:00:00).'),
-  to: z.string().optional().describe('A date and optional time for the newest article allowed. Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.'),
-  language: z.string().optional().describe('The 2-letter ISO 639-1 code of the language you want to get headlines for. Possible options: ar, de, en, es, fr, he, it, nl, no, pt, ru, sv, ud, zh. Default: all languages returned.'),
-  sortBy: z.enum(['relevancy', 'popularity', 'publishedAt']).optional().describe('The order to sort the articles in. Possible options: relevancy, popularity, publishedAt. Default: relevancy.'),
-  pageSize: z.number().int().positive().max(100).optional().default(100).describe('The number of results to return per page (request). 20 is the default, 100 is the maximum.'),
-  page: z.number().int().positive().optional().default(1).describe('Use this to page through the results if the total results found is greater than the pageSize.'),
+  sources: z
+    .string()
+    .optional()
+    .describe('A comma-separated string of identifiers for the news sources or blogs you want headlines from.'),
+  domains: z
+    .string()
+    .optional()
+    .describe('A comma-separated string of domains (e.g. bbc.co.uk, techcrunch.com) to search within.'),
+  excludeDomains: z
+    .string()
+    .optional()
+    .describe('A comma-separated string of domains (e.g. bbc.co.uk, techcrunch.com) to exclude from the search.'),
+  from: z
+    .string()
+    .optional()
+    .describe(
+      'A date and optional time for the oldest article allowed. Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS (e.g. 2024-01-01 or 2024-01-01T10:00:00).'
+    ),
+  to: z
+    .string()
+    .optional()
+    .describe('A date and optional time for the newest article allowed. Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.'),
+  language: z
+    .string()
+    .optional()
+    .describe(
+      'The 2-letter ISO 639-1 code of the language you want to get headlines for. Possible options: ar, de, en, es, fr, he, it, nl, no, pt, ru, sv, ud, zh. Default: all languages returned.'
+    ),
+  sortBy: z
+    .enum(['relevancy', 'popularity', 'publishedAt'])
+    .optional()
+    .describe(
+      'The order to sort the articles in. Possible options: relevancy, popularity, publishedAt. Default: relevancy.'
+    ),
+  pageSize: z
+    .number()
+    .int()
+    .positive()
+    .max(100)
+    .optional()
+    .default(100)
+    .describe('The number of results to return per page (request). 20 is the default, 100 is the maximum.'),
+  page: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(1)
+    .describe('Use this to page through the results if the total results found is greater than the pageSize.'),
 };
 
 type RawSchemaShape = typeof everythingInputSchemaShape;
@@ -35,7 +75,6 @@ type Output = {
     content: string | null;
   }>;
 };
-
 
 // Define the handler function for the Everything tool
 const everythingHandler = async (input: Input): Promise<Output> => {
@@ -66,15 +105,11 @@ const everythingHandler = async (input: Input): Promise<Output> => {
 
     // The SDK returns the response directly, which matches our Output type
     return response as Output;
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('News API Everything tool error:', error);
     let errorMessage = 'An unknown error occurred while fetching news.';
 
-    // Attempt to extract a more specific error message from the News API response structure
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = `News API Error: ${error.response.data.message} (Code: ${error.response.data.code})`;
-    } else if (error instanceof Error) {
+    if (error instanceof Error) {
       errorMessage = error.message;
     }
 

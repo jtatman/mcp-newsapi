@@ -7,34 +7,35 @@ import { randomUUID } from 'crypto';
 
 const app = express();
 
-// This map will store active transports, keyed by their session ID.
+// Per MCP specification, the transport layer is responsible for parsing
+// the request body. Express middleware like `express.json()` must not be used,
+// as it consumes the request stream before the transport can read it.
+
 const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
-// The single endpoint for all MCP communication.
 app.all('/mcp', async (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
   let transport = sessionId ? transports[sessionId] : undefined;
 
   if (transport) {
-    // If a session ID was provided and we have a transport for it, use it.
+    // A transport for this session already exists. Use it.
     console.log(`Using existing transport for session: ${sessionId}`);
   } else {
-    // If no session ID was provided, this must be a new connection.
-    // We create a new transport and a new server instance to handle it.
-    // The transport itself will validate that the first request is a valid `initialize` message.
-    console.log('No valid session found. Creating new transport for initialization.');
-
+    // No session exists. This must be an `initialize` request.
+    // We create a new transport and server instance to handle it.
+    console.log('No session found. Creating new transport for potential initialization.');
+    
     const newTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
-      // This callback runs only after the transport has successfully processed
-      // an `initialize` request and a session has been established.
+      // This callback runs only after the transport has successfully
+      // processed an `initialize` request from the client.
       onsessioninitialized: (initializedSessionId) => {
         console.log(`Session initialized and stored: ${initializedSessionId}`);
         transports[initializedSessionId] = newTransport;
       },
     });
 
-    // Each session requires its own dedicated McpServer instance.
+    // Each session requires its own dedicated server instance.
     const server = new McpServer({
       name: 'mcp-newsapi',
       version: '1.0.0',
@@ -42,16 +43,13 @@ app.all('/mcp', async (req: Request, res: Response) => {
     });
     registerNewsApiTools(server);
     await server.connect(newTransport);
-
+    
     transport = newTransport;
   }
 
-  // Pass the raw, untouched request directly to the transport. The transport
-  // is responsible for reading the stream, parsing the body, and handling all
-  // MCP-specific logic, including erroring on invalid requests.
-  //
-  // IMPORTANT: Do NOT `await` this call. It takes over the response stream
-  // and manages the long-lived connection asynchronously.
+  // Pass the raw, untouched request to the transport. The transport will
+  // read the stream, parse the body, and handle the MCP logic.
+  // Do NOT `await` this call, as it manages the long-lived response stream.
   transport.handleRequest(req, res).catch((err) => {
     console.error(`Request handling failed for session ${sessionId}:`, err.message);
     if (!res.headersSent) {
@@ -59,15 +57,14 @@ app.all('/mcp', async (req: Request, res: Response) => {
       res.status(400).json({
         jsonrpc: '2.0',
         error: { code: -32000, message: err.message || 'An unexpected error occurred.' },
-        id: null,
+        id: null
       });
     }
   });
 });
 
-const PORT = 3005;
-const HOST = '0.0.0.0';
-
-app.listen(PORT, HOST, () => {
-  console.log(`MCP News API Server listening on http://${HOST}:${PORT}/mcp`);
+app.listen(3005, '0.0.0.0', () => {
+  console.log('MCP News API Server listening on http://0.0.0.0:3005/mcp');
+  console.log('Server is running and waiting for requests...');
 });
+
