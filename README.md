@@ -1,6 +1,6 @@
 # MCP News API Server
 
-A Model Context Protocol (MCP) server that exposes endpoints from the News API (https://newsapi.org) to search for and retrieve news articles. This server allows programmatic access to news data via the MCP protocol.
+A Model Context Protocol (MCP) server that exposes endpoints from the News API (https://newsapi.org) to search for and retrieve news articles. This server allows programmatic access to news data via the MCP protocol. This version has been extended to present in a 
 
 ## Prerequisites
 
@@ -32,6 +32,18 @@ A Model Context Protocol (MCP) server that exposes endpoints from the News API (
    ```
    Replace `"YOUR_API_KEY"` with your actual News API key.
 
+## Docker setup
+   This server has been rewritten completely to be compatible with SSE endpoints over a remote connection.
+
+   ```bash
+   docker build -t mcp-newsapi .
+   docker run --name mcp-newsapi -p 3005:3005 -d mcp-newsapi
+   ```
+
+   docker server will be available at port 3005 on local machine
+   endpoint is located at: [http://0.0.0.0:3005/sse/](http://localhost:3005/sse/)
+
+
 ## Running the Server
 
 - **Directly:**
@@ -61,6 +73,19 @@ A Model Context Protocol (MCP) server that exposes endpoints from the News API (
   }
   ```
   Replace `"YOUR_API_KEY"` with your actual News API key.
+
+  -- OR over network --
+  ```json
+  "mcp-newsapi": {
+      "type": "http",
+      "url": "http://<docker server ip>:3005/mcp",
+      "headers": {
+          "X-API-Key": "<newsapi_key>",
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream" // For SSE
+      }
+  }
+  ```
 
 ## Available Tools
 
