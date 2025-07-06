@@ -1,6 +1,8 @@
 # MCP News API Server
 
-A Model Context Protocol (MCP) server that exposes endpoints from the News API (https://newsapi.org) to search for and retrieve news articles. This server allows programmatic access to news data via the MCP protocol. This version has been extended to present in a 
+A Model Context Protocol (MCP) server that exposes endpoints from the News API (https://newsapi.org) to search for and retrieve news articles. This server allows programmatic access to news data via the MCP protocol. 
+
+This version has been extended to present an SSE enabled remote network endpoint over local or fully remote networks for reusability. 
 
 ## Prerequisites
 
